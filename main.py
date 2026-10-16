@@ -1,4 +1,5 @@
 from fastapi import FastAPI, HTTPException, UploadFile, File, Form
+from fastapi.responses import HTMLResponse
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from typing import Optional
@@ -150,3 +151,7 @@ async def add_buyback(
     }
     bb_database.append(record)
     return {"status": "Success", "message": "BB બાય-બેક એન્ટ્રી અને ડોક્યુમેન્ટ સેવ થઈ ગયા!", "data": record}
+    @app.get("/", response_class=HTMLResponse)
+async def read_index():
+    with open("index.html", "r", encoding="utf-8") as f:
+        return f.read()
