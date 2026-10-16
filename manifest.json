@@ -1,0 +1,13 @@
+{
+  "background_color": "#ffffff",
+  "dir": "ltr",
+  "display": "standalone",
+  "name": "Devanshi Mobile",
+  "orientation": "any",
+  "scope": "/",
+  "short_name": "Devanshi",
+  "start_url": "/",
+  "theme_color": "#ffffff",
+  "id": "com.devanshi.mobile",
+  "description": "Mobile Shop Management Software"
+}
