@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="gu">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Devanshi Mobile - દેવાંશી મોબાઇલ</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-slate-50 p-4">
+
+    <!-- હેડર ટાઇટલ -->
+    <div class="max-w-md mx-auto bg-blue-600 text-white rounded-2xl p-5 shadow-lg mb-4">
+        <h1 class="text-2xl font-bold">📱 Devanshi Mobile</h1>
+        <p class="text-sm text-blue-100">દેવાંશી મોબાઇલ શોપ મેનેજમેન્ટ સિસ્ટમ</p>
+    </div>
+
+    <!-- ૧. વાયદા પોપ-અપ અને નોટિફિકેશન પૅનલ -->
+    <div class="max-w-md mx-auto bg-white rounded-2xl p-5 shadow-md mb-4 flex justify-between items-center">
+        <div>
+            <h3 class="font-bold text-gray-800">આજના વાયદા</h3>
+            <p class="text-xs text-gray-500">ગ્રાહક ઉઘરાણી ચેક કરો</p>
+        </div>
+        <button onclick="checkTodayDues()" class="bg-red-500 text-white px-4 py-2 rounded-xl font-bold shadow">
+            🔔 વાયદા લિસ્ટ
+        </button>
+    </div>
+
+    <!-- ૨. જીઓ-ફેન્સિંગ સ્ટાફ હાજરી બટન -->
+    <div class="max-w-md mx-auto bg-white rounded-2xl p-5 shadow-md mb-4">
+        <h3 class="font-bold text-gray-800 mb-2">📍 સ્ટાફ જીઓ-હાજરી (50 મીટર લોકેશન)</h3>
+        <button onclick="markStaffAttendance('IN')" class="w-full bg-green-600 text-white py-2 rounded-xl font-bold mb-2 shadow">Duty IN (દુકાને આવ્યા)</button>
+        <button onclick="markStaffAttendance('OUT')" class="w-full bg-orange-600 text-white py-2 rounded-xl font-bold shadow">Duty OUT (દુકાનેથી ગયા)</button>
+    </div>
+
+    <!-- ૩. BB (બાય-બેક) અને AI ડોક્યુમેન્ટ અપલોડ ફોર્મ -->
+    <div class="max-w-md mx-auto bg-white rounded-2xl p-5 shadow-md">
+        <h3 class="font-bold text-gray-800 mb-3">🛠️ BB (જૂનો ફોન ખરીદી & AI સ્કેન)</h3>
+        <input type="text" id="cust-name" placeholder="ગ્રાહકનું નામ" class="w-full border p-2 rounded-lg mb-2 text-sm">
+        <input type="text" id="cust-mobile" placeholder="મોબાઇલ નંબર" class="w-full border p-2 rounded-lg mb-2 text-sm">
+        <input type="text" id="model-name" placeholder="મોબાઇલ મોડેલ (દા.ત. Samsung)" class="w-full border p-2 rounded-lg mb-2 text-sm">
+        <input type="text" id="imei" placeholder="IMEI નંબર (ફરજિયાત)" class="w-full border p-2 rounded-lg mb-2 text-sm">
+        <input type="file" id="doc-file" class="w-full border p-2 rounded-lg mb-3 text-sm bg-gray-50">
+        <button onclick="submitBuyback()" class="w-full bg-blue-600 text-white py-2.5 rounded-xl font-bold shadow">AI સ્કેન સાથે સેવ કરો</button>
+    </div>
+
+    <script>
+        async function checkTodayDues() {
+            let res = await fetch('/api/udhar/today-due');
+            let data = await res.json();
+            alert(`આજે કુલ ${data.count} ગ્રાહકોના વાયદા બાકી છે.`);
+        }
+
+        function markStaffAttendance(actionType) {
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(async (position) => {
+                    let lat = position.coords.latitude;
+                    let lon = position.coords.longitude;
+                    
+                    // અહીં દુકાનનું ફિક્સ લોકેશન સેટ કરેલું છે (ટેસ્ટ માટે)
+                    let payload = {
+                        shop_id: "SHOP_001",
+                        staff_name: "Staff_Rahul",
+                        action: actionType,
+                        current_lat: lat,
+                        current_lon: lon,
+                        shop_lat: 23.6100,  // તમારી દુકાનનું અક્ષાંશ
+                        shop_lon: 72.2100   // તમારી દુકાનનું રેખાંશ
+                    };
+
+                    let res = await fetch('/api/staff/attendance', {
+                        method: 'POST',
+                        headers: {'Content-Type': 'application/json'},
+                        body: JSON.stringify(payload)
+                    });
+                    let result = await res.json();
+                    alert(result.message);
+                }, (error) => {
+                    alert("લોકેશન મેળવવામાં ભૂલ થઈ. GPS ચાલુ રાખો.");
+                });
+            } else {
+                alert("તમારું બ્રાઉઝર જીઓલોકેશન સપોર્ટ કરતું નથી.");
+            }
+        }
+
+        async function submitBuyback() {
+            let formData = new FormData();
+            formData.append("customer_name", document.getElementById('cust-name').value);
+            formData.append("mobile_number", document.getElementById('cust-mobile').value);
+            formData.append("model_name", document.getElementById('model-name').value);
+            formData.append("imei_number", document.getElementById('imei').value);
+            formData.append("purchase_price", 5000); // ટેસ્ટ રકમ
+            
+            let fileInput = document.getElementById('doc-file').files[0];
+            if(fileInput) {
+                formData.append("document", fileInput);
+            }
+
+            let res = await fetch('/api/bb/add', {
+                method: 'POST',
+                body: formData
+            });
+            let result = await res.json();
+            alert(result.message);
+        }
+    </script>
+</body>
+</html>
